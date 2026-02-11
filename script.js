@@ -62,7 +62,6 @@ if (path.includes("camera.html")) {
     const video = document.getElementById("localVideo");
     const statusDiv = document.getElementById("cameraStatus");
     const startBtn = document.getElementById("startCameraBtn");
-    const peer = new Peer();
 
     function updateStatus(msg) {
         statusDiv.innerText = `Status: ${msg}`;
@@ -70,48 +69,53 @@ if (path.includes("camera.html")) {
 
     startBtn.addEventListener("click", () => {
 
-        updateStatus("Requesting camera permission...");
+        startBtn.disabled = true; // prevent double click
+        updateStatus("Initializing Peer connection...");
 
-        navigator.mediaDevices.getUserMedia({
-            video: {
-                width: { ideal: 640 },
-                height: { ideal: 480 },
-                frameRate: { ideal: 30 }
-            },
-            audio: false
-        }).then(stream => {
+        // Explicit PeerJS options for better mobile support
+        const peer = new Peer(undefined, {
+            host: '0.peerjs.com',
+            port: 443,
+            secure: true
+        });
 
-            video.srcObject = stream;
-            updateStatus("Camera ready, connecting...");
+        peer.on('open', id => {
+            updateStatus("Peer connected, requesting camera...");
 
-            // Hide start button
-            startBtn.style.display = "none";
+            navigator.mediaDevices.getUserMedia({
+                video: {
+                    width: { ideal: 640 },
+                    height: { ideal: 480 },
+                    frameRate: { ideal: 30 }
+                },
+                audio: false
+            }).then(stream => {
 
-            peer.on("open", () => {
+                video.srcObject = stream;
+                updateStatus("Camera ready, connecting to monitor...");
+
+                const call = peer.call("fnaf-monitor-main", stream);
+
+                call.on("close", () => updateStatus("Monitor disconnected"));
+                call.on("error", () => updateStatus("Connection error!"));
                 updateStatus("Connected to monitor!");
-                const call = peer.call(MONITOR_ID, stream);
 
-                call.on("close", () => {
-                    updateStatus("Monitor disconnected");
-                });
+                // Hide start button
+                startBtn.style.display = "none";
 
-                call.on("error", () => {
-                    updateStatus("Connection error!");
-                });
-            });
-
-            peer.on("error", err => {
+            }).catch(err => {
                 console.error(err);
-                updateStatus("Peer error: " + err);
+                updateStatus("Camera access denied!");
+                alert("Camera access denied! Please allow permissions.");
             });
 
-        }).catch(() => {
-            updateStatus("Camera access denied! Please allow camera permissions.");
-            alert("Camera access denied! Please allow permissions.");
+        });
+
+        peer.on('error', err => {
+            console.error(err);
+            updateStatus("PeerJS error: " + err);
+            startBtn.disabled = false;
         });
 
     });
-}
-
-
 }
