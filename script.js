@@ -36,14 +36,13 @@ if (path.includes("monitor.html")) {
             setInterval(() => {
                 if (Math.random() < 0.25) {
                     video.classList.add("flicker");
-                    vhsOverlay.style.opacity = Math.random() * 0.1 + 0.05; // occasional VHS overlay
+                    vhsOverlay.style.opacity = Math.random() * 0.1 + 0.05;
                     setTimeout(() => {
                         video.classList.remove("flicker");
                         vhsOverlay.style.opacity = 0;
                     }, 200);
                 }
             }, 4000);
-
         });
     });
 
@@ -69,10 +68,10 @@ if (path.includes("camera.html")) {
 
     startBtn.addEventListener("click", () => {
 
-        startBtn.disabled = true; // prevent double click
+        startBtn.disabled = true;
         updateStatus("Initializing Peer connection...");
 
-        // Explicit PeerJS options for better mobile support
+        // Explicit PeerJS options for mobile compatibility
         const peer = new Peer(undefined, {
             host: '0.peerjs.com',
             port: 443,
@@ -94,7 +93,7 @@ if (path.includes("camera.html")) {
                 video.srcObject = stream;
                 updateStatus("Camera ready, connecting to monitor...");
 
-                const call = peer.call("fnaf-monitor-main", stream);
+                const call = peer.call(MONITOR_ID, stream);
 
                 call.on("close", () => updateStatus("Monitor disconnected"));
                 call.on("error", () => updateStatus("Connection error!"));
