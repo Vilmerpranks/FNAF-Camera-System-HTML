@@ -1,14 +1,11 @@
-const MONITOR_ID = "fnaf-security-system-001"; 
+const MONITOR_ID = "fnaf-security-system-unique-123"; // Make sure this matches on both ends
 
 const peerConfig = {
     host: '0.peerjs.com',
     port: 443,
     secure: true,
     config: {
-        'iceServers': [
-            { url: 'stun:stun.l.google.com:19302' },
-            { url: 'stun:stun1.l.google.com:19302' }
-        ]
+        'iceServers': [{ url: 'stun:stun.l.google.com:19302' }]
     }
 };
 
@@ -28,17 +25,17 @@ function initCameraPage(btn) {
     const statusDiv = document.getElementById("cameraStatus");
     let retryInterval = null;
 
-    function updateStatus(msg) {
-        statusDiv.innerText = `Status: ${msg}`;
-    }
-
     btn.addEventListener("click", async () => {
         btn.disabled = true;
-        updateStatus("Initializing Camera...");
+        statusDiv.innerText = "Status: Booting...";
 
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
-                video: { width: 1280, height: 720, facingMode: "environment" },
+                video: { 
+                    width: { ideal: 1280 }, 
+                    height: { ideal: 720 }, 
+                    facingMode: "environment"
+                },
                 audio: false
             });
 
@@ -49,25 +46,25 @@ function initCameraPage(btn) {
             const peer = new Peer(undefined, peerConfig);
 
             peer.on('open', () => {
-                updateStatus("Searching for Monitor...");
+                statusDiv.innerText = "Status: Searching for Monitor...";
                 
                 const attemptCall = () => {
                     const call = peer.call(MONITOR_ID, stream);
                     
-                    // Logic to detect if monitor actually answered
+                    // This triggers when the monitor successfully receives the video
                     call.on('stream', () => {
-                        updateStatus("CONNECTED"); // Now correctly updates to Connected
+                        statusDiv.innerText = "Status: CONNECTED"; 
+                        statusDiv.style.color = "#00ff00";
                         clearInterval(retryInterval);
                     });
                 };
 
                 attemptCall();
-                // Retries every 3 seconds if monitor isn't open yet
                 retryInterval = setInterval(attemptCall, 3000);
             });
 
         } catch (err) {
-            updateStatus("Error: " + err.message);
+            statusDiv.innerText = "Error: " + err.message;
             btn.disabled = false;
         }
     });
@@ -77,7 +74,7 @@ function initMonitorPage(grid) {
     const peer = new Peer(MONITOR_ID, peerConfig);
 
     peer.on("call", (call) => {
-        call.answer(); 
+        call.answer(); // Automatically answer
         
         call.on("stream", (remoteStream) => {
             if (document.getElementById(call.peer)) return;
@@ -85,13 +82,11 @@ function initMonitorPage(grid) {
             const container = document.createElement("div");
             container.id = call.peer;
 
-            // 1. Create the Label Bar first
             const label = document.createElement("div");
             label.className = "camera-label";
-            label.innerText = `[ LIVE FEED ] - CAM ${grid.children.length + 1}`;
+            label.innerText = `CAM ${grid.children.length + 1} - LIVE`;
             container.appendChild(label);
 
-            // 2. Create the Video
             const video = document.createElement("video");
             video.srcObject = remoteStream;
             video.autoplay = true; 
