@@ -1,3 +1,4 @@
+/* General Styles */
 body {
   background: black;
   color: #00ff00;
@@ -7,6 +8,7 @@ body {
   overflow: hidden;
 }
 
+/* Menu Page */
 .menu {
   display: flex;
   flex-direction: column;
@@ -22,8 +24,15 @@ body {
   text-decoration: none;
   border: 2px solid #00ff00;
   font-size: 18px;
+  transition: all 0.2s ease;
 }
 
+.btn:hover {
+  background: #00ff00;
+  color: black;
+}
+
+/* Camera Grid */
 #cameraGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, 320px);
@@ -32,12 +41,14 @@ body {
   padding-top: 20px;
 }
 
+/* Video Styling */
 video {
   width: 320px;
   height: 240px;
   object-fit: cover;
   border: 2px solid #00ff00;
   filter: grayscale(100%) brightness(2) contrast(1.4);
+  display: block;
 }
 
 /* Camera Labels */
@@ -47,9 +58,10 @@ video {
   font-size: 14px;
   font-family: monospace;
   margin-top: -20px;
+  left: 5px;
 }
 
-/* Flicker */
+/* Flicker Effect */
 .flicker {
   animation: flickerEffect 0.15s infinite;
 }
@@ -60,7 +72,7 @@ video {
   100% { opacity: 1; }
 }
 
-/* Static overlay */
+/* Static overlay for monitor */
 .static-overlay {
   pointer-events: none;
   position: fixed;
@@ -76,7 +88,7 @@ video {
   to { background-position: 100px 100px; }
 }
 
-/* VHS / scanlines effect */
+/* VHS / scanlines overlay */
 #vhsOverlay {
   pointer-events: none;
   position: fixed;
@@ -89,11 +101,31 @@ video {
   opacity: 0;
 }
 
-/* CAMERA STATUS */
+/* Camera Status on camera page */
 #cameraStatus {
   color: #00ff00;
   font-family: monospace;
   font-size: 16px;
   margin-top: 10px;
+}
+
+/* Start Button (Camera Page) */
+#startCameraBtn {
+  padding: 20px 40px;
+  font-size: 20px;
+  background: #00ff00;
+  color: black;
+  border: 3px solid #00ff00;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-top: 15px;
+  font-family: monospace;
+  transition: all 0.2s ease;
+}
+
+#startCameraBtn:hover {
+  background: black;
+  color: #00ff00;
+  border: 3px solid #00ff00;
 }
 
