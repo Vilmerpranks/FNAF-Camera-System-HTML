@@ -60,7 +60,12 @@ if (path.includes("monitor.html")) {
 if (path.includes("camera.html")) {
 
     const video = document.getElementById("localVideo");
+    const statusDiv = document.getElementById("cameraStatus");
     const peer = new Peer();
+
+    function updateStatus(msg) {
+        statusDiv.innerText = `Status: ${msg}`;
+    }
 
     // Prompt camera permission immediately
     navigator.mediaDevices.getUserMedia({
@@ -73,17 +78,30 @@ if (path.includes("camera.html")) {
     }).then(stream => {
 
         video.srcObject = stream;
+        updateStatus("Camera ready, connecting...");
 
         peer.on("open", () => {
-            peer.call(MONITOR_ID, stream);
+            updateStatus("Connected to monitor!");
+            const call = peer.call(MONITOR_ID, stream);
+
+            call.on("close", () => {
+                updateStatus("Monitor disconnected");
+            });
+
+            call.on("error", () => {
+                updateStatus("Connection error!");
+            });
+
+        });
+
+        peer.on("error", err => {
+            console.error(err);
+            updateStatus("Peer error: " + err);
         });
 
     }).catch(() => {
-        alert("Camera access denied. Please allow camera permissions!");
+        updateStatus("Camera access denied! Please allow camera permissions.");
+        alert("Camera access denied! Please allow permissions.");
     });
 
-    // Prevent sleep is handled by Chromebook OS when plugged in
-}
-
-    });
 }
