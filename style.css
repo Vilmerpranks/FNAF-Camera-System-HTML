@@ -1,0 +1,73 @@
+body {
+    background: black;
+    color: #00ff00;
+    font-family: monospace;
+    text-align: center;
+    margin: 0;
+    overflow: hidden;
+}
+
+.menu {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100vh;
+}
+
+.btn {
+    padding: 15px 40px;
+    margin: 10px;
+    background: #111;
+    color: #00ff00;
+    text-decoration: none;
+    border: 2px solid #00ff00;
+    font-size: 18px;
+}
+
+.btn:hover {
+    background: #00ff00;
+    color: black;
+}
+
+#cameraGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 480px);
+    gap: 10px;
+    justify-content: center;
+    padding-top: 20px;
+}
+
+video {
+    width: 480px;
+    height: 360px;
+    object-fit: cover;
+    border: 2px solid #00ff00;
+    filter: grayscale(100%) brightness(2) contrast(1.4);
+}
+
+/* Flicker */
+.flicker {
+    animation: flickerEffect 0.15s infinite;
+}
+
+@keyframes flickerEffect {
+    0% { opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1; }
+}
+
+/* Static overlay */
+.static-overlay {
+    pointer-events: none;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background-image: url("https://i.imgur.com/8aKQXbC.png");
+    opacity: 0.05;
+    animation: staticMove 0.4s infinite linear;
+}
+
+@keyframes staticMove {
+    from { background-position: 0 0; }
+    to { background-position: 100px 100px; }
+}
