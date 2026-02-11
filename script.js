@@ -67,54 +67,55 @@ if (path.includes("camera.html")) {
     }
 
     startBtn.addEventListener("click", () => {
-
+        
+        // 1. Disable button immediately
         startBtn.disabled = true;
-        updateStatus("Initializing Peer connection...");
+        updateStatus("Requesting camera permissions...");
 
-        // Explicit PeerJS options for mobile compatibility
-        const peer = new Peer(undefined, {
-            host: '0.peerjs.com',
-            port: 443,
-            secure: true
-        });
+        // 2. Request Camera IMMEDIATELY (This triggers the browser prompt)
+        navigator.mediaDevices.getUserMedia({
+            video: {
+                width: { ideal: 640 },
+                height: { ideal: 480 },
+                frameRate: { ideal: 30 }
+            },
+            audio: false
+        }).then(stream => {
+            
+            // 3. Camera allowed! Show it locally.
+            video.srcObject = stream;
+            video.play(); // Ensure playback starts
+            startBtn.style.display = "none"; // Hide the button
+            updateStatus("Camera active! Connecting to network...");
 
-        peer.on('open', id => {
-            updateStatus("Peer connected, requesting camera...");
+            // 4. NOW initialize the network connection
+            const peer = new Peer(undefined, {
+                host: '0.peerjs.com',
+                port: 443,
+                secure: true
+            });
 
-            navigator.mediaDevices.getUserMedia({
-                video: {
-                    width: { ideal: 640 },
-                    height: { ideal: 480 },
-                    frameRate: { ideal: 30 }
-                },
-                audio: false
-            }).then(stream => {
-
-                video.srcObject = stream;
-                updateStatus("Camera ready, connecting to monitor...");
-
+            peer.on('open', id => {
+                updateStatus("Connected to network. Calling monitor...");
+                
                 const call = peer.call(MONITOR_ID, stream);
 
                 call.on("close", () => updateStatus("Monitor disconnected"));
-                call.on("error", () => updateStatus("Connection error!"));
-                updateStatus("Connected to monitor!");
-
-                // Hide start button
-                startBtn.style.display = "none";
-
-            }).catch(err => {
-                console.error(err);
-                updateStatus("Camera access denied!");
-                alert("Camera access denied! Please allow permissions.");
+                call.on("error", (err) => updateStatus("Call error: " + err));
+                
+                updateStatus("System Online. Streaming...");
             });
 
-        });
+            peer.on('error', err => {
+                console.error(err);
+                updateStatus("Network Error: " + err.type);
+            });
 
-        peer.on('error', err => {
-            console.error(err);
-            updateStatus("PeerJS error: " + err);
-            startBtn.disabled = false;
+        }).catch(err => {
+            console.error("Camera Error:", err);
+            updateStatus("Camera access denied or error!");
+            alert("Could not start camera. Please ensure you clicked 'Allow' and are using HTTPS or localhost.");
+            startBtn.disabled = false; // Re-enable button to try again
         });
-
     });
 }
