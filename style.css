@@ -38,44 +38,53 @@ body {
   flex-wrap: wrap;
   width: 100vw;
   height: 100vh;
-  gap: 0; /* No gaps for a seamless security wall look */
-  background: black;
-}
-
-/* This makes the camera containers expand to fill space */
-#cameraGrid > div {
-  flex: 1 1 auto;
-  position: relative;
-  min-width: 50%; /* Default to side-by-side */
-  height: 50%;
-  border: 1px solid #00ff00;
+  background: #050505;
+  padding: 10px;
   box-sizing: border-box;
+  gap: 15px; /* Space between cameras */
+  justify-content: center;
+  align-content: center;
 }
 
-/* If there is only one camera, make it 100% width/height */
+/* Container for each camera feed */
+#cameraGrid > div {
+  flex: 1 1 400px; /* Allows them to shrink/grow */
+  max-width: 48%;
+  height: 40vh;
+  background: #111;
+  border: 2px solid #222;
+  display: flex;
+  flex-direction: column; /* Stack Label and Video */
+  overflow: hidden;
+}
+
+/* If only 1 camera is connected, make it large */
 #cameraGrid > div:only-child {
-  min-width: 100%;
-  height: 100%;
+  max-width: 90%;
+  height: 80vh;
 }
 
-/* Video Styling */
+/* VideoStyling */
 video {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  /* Reduced brightness to default levels */
-  filter: grayscale(30%) brightness(1) contrast(1.1); 
-  display: block;
+  /* NIGHT VISION FILTER: Green tint + Grain + Contrast */
+  filter: sepia(100%) hue-rotate(70deg) brightness(0.9) contrast(1.2) saturate(150%);
+  border-top: 1px solid #333;
 }
 
 /* Camera Labels */
 .camera-label {
-  position: absolute;
+  background: #000;
   color: #00ff00;
-  font-size: 14px;
-  font-family: monospace;
-  margin-top: -20px;
-  left: 5px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 18px;
+  font-weight: bold;
+  padding: 5px 15px;
+  text-align: left;
+  border-bottom: 2px solid #00ff00;
+  text-transform: uppercase;
 }
 
 /* Flicker Effect */
