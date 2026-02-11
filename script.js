@@ -61,47 +61,57 @@ if (path.includes("camera.html")) {
 
     const video = document.getElementById("localVideo");
     const statusDiv = document.getElementById("cameraStatus");
+    const startBtn = document.getElementById("startCameraBtn");
     const peer = new Peer();
 
     function updateStatus(msg) {
         statusDiv.innerText = `Status: ${msg}`;
     }
 
-    // Prompt camera permission immediately
-    navigator.mediaDevices.getUserMedia({
-        video: {
-            width: { ideal: 640 },
-            height: { ideal: 480 },
-            frameRate: { ideal: 30 }
-        },
-        audio: false
-    }).then(stream => {
+    startBtn.addEventListener("click", () => {
 
-        video.srcObject = stream;
-        updateStatus("Camera ready, connecting...");
+        updateStatus("Requesting camera permission...");
 
-        peer.on("open", () => {
-            updateStatus("Connected to monitor!");
-            const call = peer.call(MONITOR_ID, stream);
+        navigator.mediaDevices.getUserMedia({
+            video: {
+                width: { ideal: 640 },
+                height: { ideal: 480 },
+                frameRate: { ideal: 30 }
+            },
+            audio: false
+        }).then(stream => {
 
-            call.on("close", () => {
-                updateStatus("Monitor disconnected");
+            video.srcObject = stream;
+            updateStatus("Camera ready, connecting...");
+
+            // Hide start button
+            startBtn.style.display = "none";
+
+            peer.on("open", () => {
+                updateStatus("Connected to monitor!");
+                const call = peer.call(MONITOR_ID, stream);
+
+                call.on("close", () => {
+                    updateStatus("Monitor disconnected");
+                });
+
+                call.on("error", () => {
+                    updateStatus("Connection error!");
+                });
             });
 
-            call.on("error", () => {
-                updateStatus("Connection error!");
+            peer.on("error", err => {
+                console.error(err);
+                updateStatus("Peer error: " + err);
             });
 
+        }).catch(() => {
+            updateStatus("Camera access denied! Please allow camera permissions.");
+            alert("Camera access denied! Please allow permissions.");
         });
 
-        peer.on("error", err => {
-            console.error(err);
-            updateStatus("Peer error: " + err);
-        });
-
-    }).catch(() => {
-        updateStatus("Camera access denied! Please allow camera permissions.");
-        alert("Camera access denied! Please allow permissions.");
     });
+}
+
 
 }
