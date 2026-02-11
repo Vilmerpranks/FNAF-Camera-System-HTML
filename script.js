@@ -77,7 +77,6 @@ function initMonitorPage(grid) {
     const peer = new Peer(MONITOR_ID, peerConfig);
 
     peer.on("call", (call) => {
-        // Answer and send a dummy stream back so the camera knows we exist
         call.answer(); 
         
         call.on("stream", (remoteStream) => {
@@ -86,17 +85,19 @@ function initMonitorPage(grid) {
             const container = document.createElement("div");
             container.id = call.peer;
 
+            // 1. Create the Label Bar first
+            const label = document.createElement("div");
+            label.className = "camera-label";
+            label.innerText = `[ LIVE FEED ] - CAM ${grid.children.length + 1}`;
+            container.appendChild(label);
+
+            // 2. Create the Video
             const video = document.createElement("video");
             video.srcObject = remoteStream;
             video.autoplay = true; 
             video.playsInline = true;
             video.muted = true; 
             container.appendChild(video);
-
-            const label = document.createElement("div");
-            label.className = "camera-label";
-            label.innerText = `CAM ${grid.children.length + 1}`;
-            container.appendChild(label);
 
             grid.appendChild(container);
         });
