@@ -1,7 +1,6 @@
-// Constants
-const MONITOR_ID = "fnaf-monitor-main";
+// Change this slightly to something unique to you so other people don't clash
+const MONITOR_ID = "fnaf-security-system-001"; 
 
-// ----------------- PAGE DETECTION -----------------
 document.addEventListener("DOMContentLoaded", () => {
     const startBtn = document.getElementById("startCameraBtn");
     const cameraGrid = document.getElementById("cameraGrid");
@@ -13,75 +12,82 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-// ----------------- CAMERA LOGIC -----------------
 function initCameraPage(btn) {
     const video = document.getElementById("localVideo");
     const statusDiv = document.getElementById("cameraStatus");
 
     function updateStatus(msg) {
         statusDiv.innerText = `Status: ${msg}`;
+        console.log(msg);
     }
 
     btn.addEventListener("click", async () => {
         btn.disabled = true;
-        updateStatus("Requesting Camera...");
+        updateStatus("Initializing Camera...");
 
         try {
-            // 1. Trigger the browser prompt IMMEDIATELY
             const stream = await navigator.mediaDevices.getUserMedia({
-                video: { width: { ideal: 640 }, height: { ideal: 480 } },
+                video: { width: 640, height: 480 },
                 audio: false
             });
 
-            // 2. Show the local feed
             video.srcObject = stream;
             video.play();
             btn.style.display = "none";
-            updateStatus("Camera Active. Connecting to Network...");
 
-            // 3. Start PeerJS AFTER camera is confirmed
-            const peer = new Peer(undefined, {
-                host: '0.peerjs.com',
-                port: 443,
-                secure: true
-            });
+            const peer = new Peer(); // Random ID for camera
 
-            peer.on('open', (id) => {
-                updateStatus("System Online. Calling Monitor...");
+            peer.on('open', () => {
+                updateStatus("Connecting to Monitor...");
                 const call = peer.call(MONITOR_ID, stream);
                 
-                call.on('error', (err) => updateStatus("Connection Error: " + err));
-            });
+                // Timeout if monitor doesn't answer in 5 seconds
+                const timeout = setTimeout(() => {
+                    updateStatus("Monitor Not Responding. Is the Monitor tab open?");
+                    btn.style.display = "inline-block";
+                    btn.disabled = false;
+                }, 5000);
 
-            peer.on('error', (err) => {
-                updateStatus("Network Error: " + err.type);
-                btn.disabled = false;
+                call.on('stream', () => {
+                    clearTimeout(timeout);
+                    updateStatus("LIVE FEED ESTABLISHED");
+                });
             });
 
         } catch (err) {
-            console.error(err);
-            updateStatus("ERROR: Camera Access Denied");
-            alert("Camera access denied! Please check your site settings in the URL bar.");
+            updateStatus("Camera Denied.");
             btn.disabled = false;
         }
     });
 }
 
-// ----------------- MONITOR LOGIC -----------------
 function initMonitorPage(grid) {
-    const peer = new Peer(MONITOR_ID);
-    const vhsOverlay = document.getElementById("vhsOverlay");
+    // Setting 'debug: 3' helps us see errors in the console (F12)
+    const peer = new Peer(MONITOR_ID, { debug: 2 });
+
+    peer.on('open', (id) => {
+        console.log("Monitor Online: " + id);
+    });
 
     peer.on("call", (call) => {
-        call.answer();
+        console.log("Incoming camera feed...");
+        
+        // We MUST answer and then wait for the stream event
+        call.answer(); 
+        
         call.on("stream", (remoteStream) => {
+            // Check if this video already exists to prevent duplicates
+            if (document.getElementById(call.peer)) return;
+
             const container = document.createElement("div");
+            container.id = call.peer;
             container.style.position = "relative";
 
             const video = document.createElement("video");
             video.srcObject = remoteStream;
-            video.autoplay = true;
+            video.autoplay = true; 
             video.playsInline = true;
+            video.muted = true; // High importance: helps autoplay work
             container.appendChild(video);
 
             const label = document.createElement("div");
@@ -90,12 +96,14 @@ function initMonitorPage(grid) {
             container.appendChild(label);
 
             grid.appendChild(container);
+            console.log("Streaming started!");
         });
     });
 
-    document.addEventListener("keydown", (e) => {
-        if (e.code === "Space") {
-            grid.style.display = (grid.style.display === "none") ? "grid" : "none";
+    peer.on('error', (err) => {
+        if (err.type === 'unavailable-id') {
+            alert("This Monitor ID is already in use. Please wait 30 seconds and refresh.");
         }
+        console.error("PeerJS Error:", err);
     });
 }
