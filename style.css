@@ -88,3 +88,12 @@ video {
   );
   opacity: 0;
 }
+
+/* CAMERA STATUS */
+#cameraStatus {
+  color: #00ff00;
+  font-family: monospace;
+  font-size: 16px;
+  margin-top: 10px;
+}
+
