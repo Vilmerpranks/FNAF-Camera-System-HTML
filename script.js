@@ -1,7 +1,5 @@
-// Change this to something unique to you
 const MONITOR_ID = "fnaf-security-system-001"; 
 
-// STUN servers help devices find each other across different networks (Phone vs PC)
 const peerConfig = {
     host: '0.peerjs.com',
     port: 443,
@@ -11,8 +9,7 @@ const peerConfig = {
             { url: 'stun:stun.l.google.com:19302' },
             { url: 'stun:stun1.l.google.com:19302' }
         ]
-    },
-    debug: 1
+    }
 };
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -26,7 +23,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-// ----------------- CAMERA LOGIC -----------------
 function initCameraPage(btn) {
     const video = document.getElementById("localVideo");
     const statusDiv = document.getElementById("cameraStatus");
@@ -42,11 +38,7 @@ function initCameraPage(btn) {
 
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
-                video: { 
-                    width: { ideal: 640 }, 
-                    height: { ideal: 480 },
-                    facingMode: "environment" // Uses back camera on phones
-                },
+                video: { width: 1280, height: 720, facingMode: "environment" },
                 audio: false
             });
 
@@ -57,55 +49,42 @@ function initCameraPage(btn) {
             const peer = new Peer(undefined, peerConfig);
 
             peer.on('open', () => {
-                updateStatus("Searching for Monitor... (Open Monitor now)");
+                updateStatus("Searching for Monitor...");
                 
-                // Function to attempt the call
                 const attemptCall = () => {
-                    console.log("Attempting to connect to monitor...");
                     const call = peer.call(MONITOR_ID, stream);
                     
-                    // If we don't get a 'stream' back or error, we keep trying
+                    // Logic to detect if monitor actually answered
                     call.on('stream', () => {
-                        updateStatus("CONNECTED - STREAMING LIVE");
+                        updateStatus("CONNECTED"); // Now correctly updates to Connected
                         clearInterval(retryInterval);
-                    });
-
-                    call.on('error', () => {
-                        console.log("Monitor not found yet, retrying...");
                     });
                 };
 
-                // Try to call every 3 seconds so you can start Camera FIRST
                 attemptCall();
+                // Retries every 3 seconds if monitor isn't open yet
                 retryInterval = setInterval(attemptCall, 3000);
             });
 
         } catch (err) {
-            updateStatus("Camera Error: " + err.message);
+            updateStatus("Error: " + err.message);
             btn.disabled = false;
         }
     });
 }
 
-// ----------------- MONITOR LOGIC -----------------
 function initMonitorPage(grid) {
     const peer = new Peer(MONITOR_ID, peerConfig);
 
-    peer.on('open', (id) => {
-        console.log("Monitor Listening on ID: " + id);
-    });
-
     peer.on("call", (call) => {
-        console.log("Camera found! Connecting...");
+        // Answer and send a dummy stream back so the camera knows we exist
         call.answer(); 
         
         call.on("stream", (remoteStream) => {
-            // Check if this camera is already on screen
             if (document.getElementById(call.peer)) return;
 
             const container = document.createElement("div");
             container.id = call.peer;
-            container.style.position = "relative";
 
             const video = document.createElement("video");
             video.srcObject = remoteStream;
